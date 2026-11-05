@@ -12,24 +12,15 @@ npm run build    # 输出到 dist/
 
 ## 写文章
 
-在 `src/content/posts/` 下新建 `英文-slug.md`（有图片的文章可以建一个同名文件夹，放 `index.md` 和图片），文件名就是网址。
+用命令生成预填好文件头的空文件，然后接着写正文：
 
-```yaml
----
-title: 文章标题
-date: 2026-11-05
-category: tech          # tech 技术 / travel 游记 / life 日常 / reading 读书
-tags: [C++]
-summary: 一句话摘要，显示在列表里
-# 可选：
-# draft: true           # 草稿，只在本地 dev 显示
-# icon: i-code          # 换一个手绘图标
-# location: 青岛         # 游记的地点
-# cover: ./cover.jpg    # 游记头图（16:9）
-# coverCaption: 图注
-# book: { title: 书名, author: 作者, finished: 2026-06-18 }
----
+```bash
+npm run new -- my-new-post --title "文章标题" --category tech --tags "C++,Astro" --summary "一句话摘要"
 ```
+
+`--title` 和 `--category` 必填，有图片的文章加 `--dir`，其余选项见 `npm run new -- --help`。
+
+头图（`cover: ./cover.jpg`，16:9）、图注（`coverCaption`）和读完日期（`book` 里的 `finished`）没有对应参数，需要时加到生成的文件头里。
 
 正文里可用的写法：
 

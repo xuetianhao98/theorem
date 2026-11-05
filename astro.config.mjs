@@ -6,6 +6,7 @@ export default defineConfig({
   site: 'https://xuethlovelicy.xyz',
   trailingSlash: 'always',
   integrations: [sitemap()],
+  build: { inlineStylesheets: 'never' },
   markdown: {
     shikiConfig: { theme: theoremTheme, wrap: false },
   },

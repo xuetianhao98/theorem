@@ -39,4 +39,4 @@ summary: 一句话摘要，显示在列表里
 
 ## 设计
 
-颜色、字体、间距都在 `src/styles/global.css` 的变量里；手绘图标在 `src/components/IconSprite.astro`；代码高亮主题在 `src/lib/shiki-theme.js`。完整规范见《Theorem 博客设计方案》。
+颜色、字体、间距都在 `src/styles/global.css` 的变量里；手绘图标在 `public/icons.svg`；代码高亮主题在 `src/lib/shiki-theme.js`。完整规范见《Theorem 博客设计方案》。

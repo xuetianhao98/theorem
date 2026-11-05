@@ -1,0 +1,13 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageTitle from '../../components/PageTitle.astro';
+import CategoryFilter from '../../components/CategoryFilter.astro';
+import YearGroups from '../../components/YearGroups.astro';
+import { getPosts } from '../../lib/site';
+const posts = await getPosts();
+---
+<Base title="文章">
+  <PageTitle title="文章" sub={`共 ${posts.length} 篇`} />
+  <CategoryFilter />
+  <YearGroups posts={posts} />
+</Base>

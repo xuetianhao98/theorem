@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+---
+<Base title="关于">
+  <article class="about">
+    <Icon name="i-horizon" width={160} height={107} class="mark" label="手绘图案：一个圆，一条水平线横穿它的下三分之一" />
+    <h1>关于</h1>
+    <div class="body">
+      <p>我是 Theo，平时写 C++，也喜欢骑车、喝茶和读书。</p>
+      <p>Theorem 是我的个人笔记本：大部分是写代码时想明白的事，偶尔记下路上看到的风景、平常的日子和读过的书。</p>
+      <p>名字取自 Theo 加上 rem，读起来是“定理”。希望这里写下的东西，能像定理一样，被认真地推导过。</p>
+    </div>
+    <h2>联系</h2>
+    <ul class="links">
+      <li><span>GitHub</span><a href="https://github.com/xuetianhao98" rel="me">xuetianhao98</a></li>
+      <li><span>订阅</span><a href="/rss.xml">RSS</a></li>
+    </ul>
+  </article>
+</Base>
+<style>
+  .about { max-width: var(--measure); }
+  .about :global(.mark) { color: var(--ink); margin-bottom: 32px; }
+  h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.35; margin-bottom: 24px; }
+  .body { font-size: 16.5px; line-height: 1.95; display: grid; gap: 1.1em; }
+  h2 { font-size: 21px; margin: 2em 0 .8em; display: flex; align-items: center; gap: 10px; }
+  h2::before { content: ""; width: 18px; height: 2px; background: var(--accent); border-radius: 2px; }
+  .links { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .links li { display: grid; grid-template-columns: 80px 1fr; align-items: baseline; }
+  .links span { color: var(--muted-text); font-size: 14px; }
+  .links a { color: var(--accent-text); }
+  .links a:hover { color: var(--accent); }
+</style>

@@ -1,0 +1,207 @@
+---
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { CATEGORIES, getPosts, fmtDate, wordCount, readMinutes, postUrl, tagUrl, type Post } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    props: { post, newer: posts[i - 1], older: posts[i + 1] },
+  }));
+}
+interface Props { post: Post; newer?: Post; older?: Post }
+const { post, newer, older } = Astro.props;
+const { Content, headings } = await render(post);
+const d = post.data;
+const cat = CATEGORIES[d.category];
+const isTrip = d.category === 'travel';
+const toc = headings.filter((h) => h.depth === 2);
+const showToc = !isTrip && toc.length >= 3;
+const words = wordCount(post.body);
+const photoCount = (post.body?.match(/!\[/g)?.length ?? 0) + (d.cover ? 1 : 0);
+const meta = [fmtDate(d.date), isTrip ? `${photoCount} 张照片` : `约 ${words} 字`, `${readMinutes(words)} 分钟`];
+const kicker = [cat.name, isTrip ? d.location : d.tags[0]].filter(Boolean).join(' · ');
+---
+<Base title={d.title} description={d.summary}>
+  <article class:list={['post', { trip: isTrip, 'has-toc': showToc }]}>
+    <header class="ph">
+      <div class="kick"><Icon name={d.icon ?? cat.icon} width={30} height={20} />{kicker}</div>
+      <h1>{d.title}</h1>
+      <div class="meta mono">{meta.join(' · ')}</div>
+    </header>
+
+    {d.cover && (
+      <figure class="cover">
+        <Image src={d.cover} alt={d.coverCaption ?? d.title} widths={[640, 960, 1440]} sizes="(max-width: 1100px) 100vw, 960px" />
+        {d.coverCaption && <figcaption class="mono">{d.coverCaption}</figcaption>}
+      </figure>
+    )}
+
+    {d.book && (
+      <aside class="book">
+        <Icon name="i-book" width={48} height={32} />
+        <div>
+          <div class="bt">《{d.book.title}》</div>
+          <div class="ba">{d.book.author}{d.book.finished && <span class="mono"> · 读完于 {fmtDate(d.book.finished)}</span>}</div>
+        </div>
+      </aside>
+    )}
+
+    <div class="layout">
+      <div class="prose"><Content /></div>
+      {showToc && (
+        <nav class="toc" aria-label="目录">
+          <b>目录</b>
+          {toc.map((h) => <a href={`#${h.slug}`} data-slug={h.slug}>{h.text}</a>)}
+        </nav>
+      )}
+    </div>
+
+    <footer class="pf">
+      {d.tags.length > 0 && <p class="tags">{d.tags.map((t) => <a href={tagUrl(t)}>#{t}</a>)}</p>}
+      <nav class="pn" aria-label="上一篇和下一篇">
+        {older ? <a href={postUrl(older)}><span>上一篇</span>{older.data.title}</a> : <span />}
+        {newer ? <a class="next" href={postUrl(newer)}><span>下一篇</span>{newer.data.title}</a> : <span />}
+      </nav>
+    </footer>
+  </article>
+</Base>
+
+<script>
+  // 代码块：语言标签 + 复制按钮
+  document.querySelectorAll<HTMLPreElement>('.prose pre').forEach((pre) => {
+    const box = document.createElement('div');
+    box.className = 'code';
+    pre.replaceWith(box);
+    box.appendChild(pre);
+    const lang = pre.dataset.language;
+    if (lang && lang !== 'plaintext') {
+      const l = document.createElement('span');
+      l.className = 'lang';
+      l.textContent = lang.toUpperCase();
+      box.appendChild(l);
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy';
+    btn.textContent = '复制';
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pre.innerText);
+        btn.textContent = '已复制';
+      } catch { btn.textContent = '复制失败'; }
+      setTimeout(() => (btn.textContent = '复制'), 1500);
+    });
+    box.appendChild(btn);
+  });
+
+  // 标题锚点
+  document.querySelectorAll<HTMLHeadingElement>('.prose h2[id], .prose h3[id]').forEach((h) => {
+    const a = document.createElement('a');
+    a.href = `#${h.id}`;
+    a.className = 'anchor';
+    a.textContent = '#';
+    a.setAttribute('aria-label', '复制本节链接');
+    a.addEventListener('click', () => navigator.clipboard?.writeText(location.href.split('#')[0] + '#' + h.id).catch(() => {}));
+    h.appendChild(a);
+  });
+
+  // 目录高亮
+  const links = new Map<string, HTMLAnchorElement>();
+  document.querySelectorAll<HTMLAnchorElement>('.toc a').forEach((a) => links.set(a.dataset.slug!, a));
+  if (links.size) {
+    const setActive = (id: string) => links.forEach((a, k) => (k === id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
+    const io = new IntersectionObserver((entries) => {
+      const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      if (vis[0]) setActive(vis[0].target.id);
+    }, { rootMargin: '0px 0px -70% 0px' });
+    links.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+  }
+</script>
+
+<style>
+  .ph { display: grid; gap: 12px; margin-bottom: 36px; }
+  .kick { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--accent-text); letter-spacing: .08em; }
+  .kick :global(svg) { color: var(--accent); }
+  h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.35; }
+  .meta { font-size: 12px; color: var(--muted-text); }
+
+  .cover { margin: 0 0 40px; }
+  .cover :global(img) { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; }
+  .cover figcaption { margin-top: 12px; font-size: 12px; color: var(--muted-text); }
+
+  .book { display: flex; gap: 16px; align-items: center; background: var(--code-bg); border-radius: 8px; padding: 14px 18px; margin-bottom: 36px; max-width: var(--measure); }
+  .book :global(svg) { color: var(--accent); }
+  .bt { font-weight: 600; }
+  .ba { font-size: 13px; color: var(--muted-text); }
+
+  .layout { display: grid; grid-template-columns: minmax(0, var(--measure)); gap: 56px; align-items: start; }
+  .has-toc .layout { grid-template-columns: minmax(0, var(--measure)) 180px; }
+  @media (max-width: 820px) { .has-toc .layout { grid-template-columns: minmax(0, 1fr); } .toc { display: none !important; } }
+
+  .toc { position: sticky; top: 24px; display: grid; gap: 8px; font-size: 13px; color: var(--muted-text); border-left: 1px solid var(--line); padding-left: 16px; }
+  .toc b { font-weight: 500; color: var(--ink); font-size: 12px; letter-spacing: .08em; }
+  .toc a { transition: color var(--ease); }
+  .toc a:hover { color: var(--ink); }
+  .toc a[aria-current] { color: var(--accent-text); }
+
+  .pf { max-width: var(--measure); margin-top: 48px; display: grid; gap: 28px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--accent-text); }
+  .tags a:hover { color: var(--accent); }
+  .pn { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid var(--line); padding-top: 20px; font-size: 15px; }
+  .pn a { display: grid; gap: 2px; transition: color var(--ease); }
+  .pn a:hover { color: var(--accent); }
+  .pn span { font-size: 12px; color: var(--muted-text); }
+  .pn .next { text-align: right; }
+
+  /* ---------- 正文 ---------- */
+  .prose { font-size: 16.5px; line-height: 1.95; min-width: 0; }
+  @media (max-width: 480px) { .prose { font-size: 16px; } }
+  .prose :global(p), .prose :global(ul), .prose :global(ol) { margin: 0 0 1.1em; }
+  .prose :global(ul), .prose :global(ol) { padding-left: 1.4em; }
+  .prose :global(li) { margin: .2em 0; }
+  .prose :global(li::marker) { color: var(--muted); }
+  .prose :global(h2) { font-size: 21px; line-height: 1.5; margin: 1.8em 0 .7em; display: flex; align-items: center; gap: 10px; scroll-margin-top: 24px; }
+  .prose :global(h2::before) { content: ""; width: 18px; height: 2px; background: var(--accent); border-radius: 2px; flex: none; }
+  .prose :global(h3) { font-size: 18px; line-height: 1.6; margin: 1.6em 0 .6em; scroll-margin-top: 24px; }
+  .prose :global(.anchor) { margin-left: 6px; color: var(--muted); opacity: 0; font-weight: 400; transition: opacity var(--ease); }
+  .prose :global(h2:hover .anchor), .prose :global(h3:hover .anchor), .prose :global(.anchor:focus-visible) { opacity: 1; }
+  .prose :global(a:not(.anchor)) { color: var(--accent-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: rgb(91 117 144 / .4); transition: text-decoration-color var(--ease); }
+  .prose :global(a:not(.anchor):hover) { text-decoration-color: var(--accent); }
+  .prose :global(strong) { font-weight: 600; background: linear-gradient(transparent 64%, var(--soft) 64%); }
+  .prose :global(em) { font-style: normal; font-weight: 500; }
+  .prose :global(:not(pre) > code) { font-family: var(--mono); font-size: .86em; background: var(--code-bg); padding: .1em .4em; border-radius: 4px; }
+  .prose :global(blockquote) { margin: 0 0 1.1em; padding-left: 18px; border-left: 2px solid var(--accent); color: var(--muted-text); }
+  .prose :global(hr) { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+  .prose :global(img) { border-radius: 4px; margin: 0 auto; }
+  .prose :global(table) { display: block; overflow-x: auto; border-collapse: collapse; margin: 0 0 1.3em; font-size: 15px; }
+  .prose :global(th), .prose :global(td) { padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line); text-align: left; }
+  .prose :global(th) { font-weight: 600; }
+
+  .prose :global(.code) { position: relative; margin: 0 0 1.3em; }
+  .prose :global(pre) { margin: 0 0 1.3em; padding: 18px 20px; border-radius: 8px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; background: var(--code-bg) !important; }
+  .prose :global(.code pre) { margin: 0; }
+  .prose :global(pre code) { font-family: inherit; }
+  .prose :global(.code .lang) { position: absolute; top: 8px; right: 12px; font-family: var(--mono); font-size: 10px; color: var(--muted-text); letter-spacing: .1em; transition: opacity var(--ease); }
+  .prose :global(.code .copy) { position: absolute; top: 6px; right: 8px; font: 12px var(--serif); color: var(--accent-text); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; opacity: 0; transition: opacity var(--ease); }
+  .prose :global(.code:hover .copy), .prose :global(.code .copy:focus-visible) { opacity: 1; }
+  .prose :global(.code:hover .lang) { opacity: 0; }
+  @media (hover: none) { .prose :global(.code .copy) { opacity: 1; } .prose :global(.code .lang) { display: none; } }
+
+  .prose :global(figure) { margin: 0 0 1.4em; display: grid; gap: 8px; }
+  .prose :global(figcaption) { font-family: var(--mono); font-size: 12px; color: var(--muted-text); text-align: center; }
+  .prose :global(.diagram) { background: var(--code-bg); border-radius: 8px; color: var(--ink); width: 100%; height: auto; }
+  .prose :global(.pair) { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 1.4em; }
+  .prose :global(.pair > p) { display: contents; }
+  .prose :global(.pair img) { aspect-ratio: 4 / 5; object-fit: cover; width: 100%; }
+
+  /* 提示框：<div class="note tip"> 或 <div class="note warn"> */
+  .prose :global(.note) { display: flex; gap: 12px; align-items: flex-start; background: var(--code-bg); border-radius: 8px; padding: 14px 18px; margin: 0 0 1.3em; font-size: 15px; line-height: 1.8; }
+  .prose :global(.note::before) { content: ""; flex: none; width: 30px; height: 20px; margin-top: 4px; background: var(--accent); -webkit-mask: var(--i) center / contain no-repeat; mask: var(--i) center / contain no-repeat; }
+  .prose :global(.note.tip) { --i: url('/icons/tip.svg'); }
+  .prose :global(.note.warn) { --i: url('/icons/warn.svg'); }
+  .prose :global(.note > :last-child) { margin-bottom: 0; }
+</style>

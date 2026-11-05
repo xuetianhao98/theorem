@@ -1,0 +1,20 @@
+---
+import PostRow from './PostRow.astro';
+import { groupByYear, type Post } from '../lib/site';
+interface Props { posts: Post[] }
+const groups = groupByYear(Astro.props.posts);
+---
+{groups.length === 0 && <p class="empty">这里还没有文章。</p>}
+{groups.map(([year, posts]) => (
+  <section class="year" aria-label={`${year} 年`}>
+    <h2 class="mono">{year}</h2>
+    <ul>{posts.map((p) => <PostRow post={p} />)}</ul>
+  </section>
+))}
+<style>
+  .year { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 8px 24px; border-top: 1px solid var(--line); padding-top: 18px; margin-bottom: 28px; }
+  h2 { font-weight: 400; font-size: 13px; color: var(--muted-text); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .empty { color: var(--muted-text); }
+  @media (max-width: 640px) { .year { grid-template-columns: 1fr; } }
+</style>

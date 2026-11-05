@@ -1,0 +1,23 @@
+---
+import Icon from './Icon.astro';
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/posts/', label: '文章', match: (p: string) => p.startsWith('/posts') || p.startsWith('/tags') },
+  { href: '/categories/', label: '分类', match: (p: string) => p.startsWith('/categories') },
+  { href: '/about/', label: '关于', match: (p: string) => p.startsWith('/about') },
+];
+---
+<header class="top">
+  <a class="brand" href="/" aria-label="Theorem 首页"><Icon name="i-mark" width={34} height={24} />Theorem</a>
+  <nav aria-label="主导航">
+    {nav.map((n) => <a href={n.href} aria-current={n.match(path) ? 'page' : undefined}>{n.label}</a>)}
+  </nav>
+</header>
+<style>
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: clamp(40px, 8vw, 88px); }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 20px; letter-spacing: .02em; }
+  .brand :global(svg) { color: var(--accent); }
+  nav { display: flex; gap: 22px; font-size: 14px; color: var(--muted-text); }
+  nav a { transition: color var(--ease); }
+  nav a:hover, nav a[aria-current] { color: var(--ink); }
+</style>

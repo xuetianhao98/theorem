@@ -1,0 +1,40 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageTitle from '../../components/PageTitle.astro';
+import Icon from '../../components/Icon.astro';
+import { CATEGORIES, getPosts, postUrl } from '../../lib/site';
+const posts = await getPosts();
+const cats = Object.entries(CATEGORIES).map(([key, c]) => ({ key, ...c, posts: posts.filter((p) => p.data.category === key) }));
+---
+<Base title="分类">
+  <PageTitle title="分类" />
+  <div class="grid">
+    {cats.map((c) => (
+      <section class="cat">
+        <a class="head" href={`/categories/${c.key}/`}>
+          <Icon name={c.icon} />
+          <span><span class="name">{c.name}</span><span class="count mono">{c.posts.length} 篇</span></span>
+        </a>
+        <p class="blurb">{c.blurb}</p>
+        <ul>
+          {c.posts.slice(0, 3).map((p) => <li><a href={postUrl(p)}>{p.data.title}</a></li>)}
+          {c.posts.length === 0 && <li class="none">还没有</li>}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>
+<style>
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px 56px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .cat { border-top: 1px solid var(--line); padding-top: 20px; display: grid; gap: 10px; align-content: start; }
+  .head { display: flex; align-items: center; gap: 20px; }
+  .head :global(svg) { color: var(--ink); width: 96px; height: 64px; transition: color var(--ease); }
+  .head:hover :global(svg), .head:hover .name { color: var(--accent); }
+  .name { display: block; font-size: 22px; font-weight: 600; transition: color var(--ease); }
+  .count { font-size: 12px; color: var(--muted-text); }
+  .blurb { font-size: 14px; color: var(--muted-text); }
+  ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 15px; }
+  ul a:hover { color: var(--accent-text); }
+  .none { color: var(--muted-text); font-size: 14px; }
+</style>

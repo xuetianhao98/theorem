@@ -1,0 +1,31 @@
+---
+import Icon from './Icon.astro';
+import { CATEGORIES, fmtMonthDay, postUrl, type Post } from '../lib/site';
+interface Props { post: Post }
+const { post } = Astro.props;
+const cat = CATEGORIES[post.data.category];
+---
+<li>
+  <a class="row" href={postUrl(post)}>
+    <Icon name={post.data.icon ?? cat.icon} width={40} height={28} />
+    <span class="text">
+      <span class="t"><span class="cat">{cat.name}</span>{post.data.title}</span>
+      <span class="d">{post.data.summary}</span>
+    </span>
+    <time class="mono" datetime={post.data.date.toISOString()}>{fmtMonthDay(post.data.date)}</time>
+  </a>
+</li>
+<style>
+  .row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 10px 0; }
+  .row :global(svg) { color: var(--muted); transition: color var(--ease); }
+  .t { display: block; font-size: 17px; line-height: 1.5; transition: color var(--ease); }
+  .cat { font-size: 12px; color: var(--accent-text); margin-right: 8px; letter-spacing: .06em; }
+  .d { display: block; margin-top: 2px; font-size: 13px; color: var(--muted-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  time { font-size: 12px; color: var(--muted-text); }
+  .row:hover .t, .row:hover :global(svg) { color: var(--accent); }
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 32px minmax(0, 1fr); gap: 4px 12px; }
+    .row :global(svg) { width: 30px; height: 20px; }
+    time { grid-column: 2; }
+  }
+</style>

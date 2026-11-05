@@ -1,0 +1,17 @@
+---
+import { CATEGORIES } from '../lib/site';
+interface Props { current?: string }
+const { current } = Astro.props;
+---
+<nav class="filter" aria-label="按分类筛选">
+  <a href="/posts/" aria-current={!current ? 'page' : undefined}>全部</a>
+  {Object.entries(CATEGORIES).map(([key, c]) => (
+    <a href={`/categories/${key}/`} aria-current={current === key ? 'page' : undefined}>{c.name}</a>
+  ))}
+</nav>
+<style>
+  .filter { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; color: var(--muted-text); margin-bottom: 32px; }
+  a { padding-bottom: 2px; border-bottom: 1px solid transparent; transition: color var(--ease); }
+  a:hover { color: var(--ink); }
+  a[aria-current] { color: var(--ink); border-bottom-color: var(--accent); }
+</style>

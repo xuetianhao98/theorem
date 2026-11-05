@@ -1,0 +1,15 @@
+---
+import { SITE } from '../lib/site';
+const year = new Date().getFullYear();
+---
+<footer>
+  <span>© {year} {SITE.author}</span>
+  <span aria-hidden="true">·</span>
+  <a href="/rss.xml">RSS</a>
+  <span aria-hidden="true">·</span>
+  <a href="https://github.com/xuetianhao98" rel="me">GitHub</a>
+</footer>
+<style>
+  footer { margin-top: clamp(64px, 10vw, 120px); padding: 20px 0 40px; border-top: 1px solid var(--line); display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted-text); }
+  a:hover { color: var(--accent-text); }
+</style>

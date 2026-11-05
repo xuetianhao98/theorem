@@ -1,0 +1,19 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageTitle from '../../components/PageTitle.astro';
+import CategoryFilter from '../../components/CategoryFilter.astro';
+import YearGroups from '../../components/YearGroups.astro';
+import { CATEGORIES, getPosts, type Category } from '../../lib/site';
+
+export async function getStaticPaths() {
+  return Object.keys(CATEGORIES).map((cat) => ({ params: { cat } }));
+}
+const cat = Astro.params.cat as Category;
+const info = CATEGORIES[cat];
+const posts = (await getPosts()).filter((p) => p.data.category === cat);
+---
+<Base title={info.name}>
+  <PageTitle title={info.name} sub={`${info.blurb} · 共 ${posts.length} 篇`} />
+  <CategoryFilter current={cat} />
+  <YearGroups posts={posts} />
+</Base>
